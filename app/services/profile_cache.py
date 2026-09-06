@@ -18,12 +18,12 @@ class ProfileIDManager:
         cached_profile_id = await self.redis_client.get(key)
         if cached_profile_id is not None:
             return convert_value_to_int(cached_profile_id)
-        return await self._get_profile_id_from_db(user_id=user_id, key=key)
-
-    async def _get_profile_id_from_db(self, user_id: int, key: str) -> int | None:
-        profile_id = await get_profile_id_by_user_id(db=self.db, user_id=user_id)
+        profile_id = await self._get_profile_id_from_db(user_id=user_id)
         await self._set_cached_profile_id(profile_id=profile_id, key=key)
         return profile_id
+
+    async def _get_profile_id_from_db(self, user_id: int) -> int | None:
+        return await get_profile_id_by_user_id(db=self.db, user_id=user_id)
 
     async def _set_cached_profile_id(self, profile_id: int | None, key: str) -> None:
         if profile_id is not None:
