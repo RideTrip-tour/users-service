@@ -1,6 +1,8 @@
+from unittest.mock import MagicMock
+
 import pytest
 
-from app.services.profile_cache import get_profile_id
+from app.services.profile_cache import ProfileIDManager
 
 
 @pytest.mark.asyncio
@@ -17,12 +19,11 @@ async def test_get_profile_id_returns_cached_value(
         "app.services.profile_cache.get_profile_id_by_user_id",
         mock_get_profile_id_by_user_id,
     )
-
-    result = await get_profile_id(
-        user_id=7,
+    manager = ProfileIDManager(
+        db=MagicMock(),
         redis_client=redis_client,
     )
-
+    result = await manager.get_profile_id(user_id=7)
     assert result == 1
 
 
@@ -39,18 +40,17 @@ async def test_get_profile_id_loads_from_db_and_caches(
         "app.services.profile_cache.get_profile_id_by_user_id",
         mock_get_profile_id_by_user_id,
     )
-
-    result = await get_profile_id(
-        user_id=7,
+    manager = ProfileIDManager(
+        db=MagicMock(),
         redis_client=redis_client,
     )
-
+    result = await manager.get_profile_id(user_id=7)
     assert result == 1
     assert redis_client.data["profile_service:profile_id:7"] == 1
 
 
 @pytest.mark.asyncio
-async def test_get_profile_id_raises_unauthorized_when_profile_not_found(
+async def test_get_profile_id_returns_none_when_profile_not_found(
     redis_client,
     monkeypatch,
 ):
@@ -62,9 +62,9 @@ async def test_get_profile_id_raises_unauthorized_when_profile_not_found(
         mock_get_profile_id_by_user_id,
     )
 
-    result = await get_profile_id(
-        user_id=7,
+    manager = ProfileIDManager(
+        db=MagicMock(),
         redis_client=redis_client,
     )
-
+    result = await manager.get_profile_id(user_id=7)
     assert result is None

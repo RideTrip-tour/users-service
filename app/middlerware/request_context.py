@@ -5,7 +5,8 @@ import logging
 from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from app.services.profile_cache import get_profile_id
+from app.db.database import AsyncSessionLocal
+from app.services.profile_cache import ProfileIDManager
 from app.utils.converters import convert_value_to_int
 
 logger = logging.getLogger(__name__)
@@ -67,10 +68,13 @@ async def user_context_middleware(request: Request, call_next):
             )
             if user_id is None:
                 return _unauthorized_response()
-            profile_id = await get_profile_id(
-                user_id=user_id,
-                redis_client=request.app.state.redis,
-            )
+
+            async with AsyncSessionLocal() as session:
+                profile_manager = ProfileIDManager(
+                    db=session,
+                    redis_client=request.app.state.redis,
+                )
+                profile_id = await profile_manager.get_profile_id(user_id=user_id)
             if profile_id is None:
                 return _unauthorized_response(detail="Profile not found")
             request.state.user["profile_id"] = profile_id

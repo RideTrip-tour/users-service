@@ -1,7 +1,6 @@
 import base64
 import json
 from datetime import UTC, datetime
-from typing import Any
 
 import pytest
 from fastapi import status
@@ -33,30 +32,33 @@ class StubProfileManager:
         return self.profile
 
 
+class StubProfileIDManager:
+    def __init__(self, db, redis_client, profile_id=1):
+        self.db = db
+        self.redis_client = redis_client
+        self.profile_id = profile_id
+
+    async def get_profile_id(self, user_id: int) -> int | None:
+        assert user_id == 7
+        return self.profile_id
+
+
 @pytest.mark.asyncio
 async def test_x_user_claims_header_is_restored_into_request_state(
     client, override_manager, monkeypatch
 ):
     manager = override_manager(StubProfileManager())
-
-    async def mock_get_profile_id(user_id: int, redis_client: Any) -> int:
-        assert user_id == 7
-        return 1
-
     monkeypatch.setattr(
-        "app.middlerware.request_context.get_profile_id",
-        mock_get_profile_id,
+        "app.middlerware.request_context.ProfileIDManager",
+        StubProfileIDManager,
     )
-
     claims = base64.urlsafe_b64encode(json.dumps({"id": "7"}).encode("utf-8")).decode(
         "ascii"
     )
-
     response = await client.get(
         "/api/profile/me",
         headers={"X-User-Claims": claims},
     )
-
     assert response.status_code == status.HTTP_200_OK
     assert manager.calls == [("get_profile_by_user_id", 7)]
 
@@ -75,15 +77,12 @@ async def test_x_user_claims_header_returns_401(
     claims_data,
     expected_detail,
 ):
-    async def mock_get_profile_id(user_id: int, redis_client: Any) -> int | None:
-        assert user_id == 7
-        return None
-
     monkeypatch.setattr(
-        "app.middlerware.request_context.get_profile_id",
-        mock_get_profile_id,
+        "app.middlerware.request_context.ProfileIDManager",
+        lambda db, redis_client: StubProfileIDManager(
+            db=db, redis_client=redis_client, profile_id=None
+        ),
     )
-
     claims = base64.urlsafe_b64encode(json.dumps(claims_data).encode("utf-8")).decode(
         "ascii"
     )
