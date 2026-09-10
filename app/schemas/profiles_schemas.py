@@ -8,7 +8,7 @@ from .validators.phone_number import normalize_phone_number
 MIN_LEN_NAME = 2
 MAX_LEN_NAME = 15
 PATTERN_NAME = r"^[A-Za-zА-Яа-яЁё]+(?:[ -][A-Za-zА-Яа-яЁё]+)?$"
-MAX_LEN_ABOUT_ME = 300
+MAX_LEN_ABOUT_ME = 200
 MAX_LEN_ACTIVITIES = 25
 MIN_LEN_COUNTRY = 2
 MAX_LEN_COUNTRY = 25
