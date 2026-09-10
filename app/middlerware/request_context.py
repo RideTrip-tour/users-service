@@ -59,7 +59,6 @@ async def user_context_middleware(request: Request, call_next):
     - X-User-Claims: base64url(JSON) с claims пользователя
     - X-User-ID: fallback, если нужен только идентификатор
     """
-    logger.info("Middleware start")
     if getattr(request.state, "user", None) is None:
         request.state.user = _get_user_from_headers(request)
         if isinstance(request.state.user, dict):
@@ -67,6 +66,7 @@ async def user_context_middleware(request: Request, call_next):
                 request.state.user.get("id") or request.state.user.get("sub")
             )
             if user_id is None:
+                logger.warning("Unable to resolve user_id from request headers")
                 return _unauthorized_response()
 
             async with AsyncSessionLocal() as session:
@@ -76,8 +76,8 @@ async def user_context_middleware(request: Request, call_next):
                 )
                 profile_id = await profile_manager.get_profile_id(user_id=user_id)
             if profile_id is None:
+                logger.warning("Profile not found for user_id=%s", user_id)
                 return _unauthorized_response(detail="Profile not found")
             request.state.user["profile_id"] = profile_id
     response = await call_next(request)
-    logger.info("Middleware end")
     return response
