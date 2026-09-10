@@ -1,8 +1,8 @@
-from datetime import datetime, date
+from datetime import UTC, date, datetime
 
 import pycountry
-from pydantic import BaseModel, ConfigDict, Field, field_validator
 from dateutil.relativedelta import relativedelta
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .validators.phone_number import normalize_phone_number
 
@@ -84,9 +84,11 @@ class ProfileBase(BaseModel):
     @classmethod
     def validate_birth_date(cls, value: date | None) -> date | None:
         if value is not None:
-            if relativedelta(date.today(), value).years < 18:
+            age = relativedelta(datetime.now(UTC).date(), value).years
+            if age < 18:
                 raise ValueError("User must be at least 18 years old")
         return value
+
 
 class ProfileCreate(ProfileBase):
     pass

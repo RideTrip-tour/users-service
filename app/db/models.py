@@ -1,8 +1,9 @@
-from datetime import datetime, date
+from datetime import date, datetime
 
 from sqlalchemy import (
     JSON,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -11,7 +12,6 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
     text,
-    Date
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
