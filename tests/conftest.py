@@ -1,6 +1,7 @@
 import os
 import sys
 from collections.abc import Generator
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,7 @@ INVALID_PROFILE_FIELDS = [
     ("citizenship", "A" * 16),
     ("currency", "RU"),
     ("currency", "RUBB"),
+    ("birth_date", "2002.09.09"),
 ]
 
 
@@ -78,3 +80,8 @@ class MockRedis:
 @pytest.fixture
 def redis_client():
     return MockRedis()
+
+
+@pytest.fixture
+def today():
+    return datetime.now(UTC).date()
