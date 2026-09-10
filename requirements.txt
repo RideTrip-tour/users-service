@@ -5,6 +5,7 @@ phonenumbers==9.0.37
 psycopg2-binary==2.9.11
 pydantic==2.12.5
 pydantic-settings==2.13.1
+python-dateutil==2.9.0.post0
 redis==6.1.0
 sqlalchemy==2.0.49
 asyncpg==0.31.0

@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, date
 
 import pycountry
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from dateutil.relativedelta import relativedelta
 
 from .validators.phone_number import normalize_phone_number
 
@@ -37,7 +38,7 @@ class ProfileBase(BaseModel):
         pattern=PATTERN_NAME,
     )
     phone_number: str | None = None
-    age: int | None = None
+    birth_date: date | None = Field(default=None, description="")
     about_me: str | None = Field(
         default=None,
         max_length=MAX_LEN_ABOUT_ME,
@@ -79,6 +80,13 @@ class ProfileBase(BaseModel):
                 raise ValueError("Invalid currency code")
         return value
 
+    @field_validator("birth_date")
+    @classmethod
+    def validate_birth_date(cls, value: date | None) -> date | None:
+        if value is not None:
+            if relativedelta(date.today(), value).years < 18:
+                raise ValueError("User must be at least 18 years old")
+        return value
 
 class ProfileCreate(ProfileBase):
     pass

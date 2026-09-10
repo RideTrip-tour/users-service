@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, date
 from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
+from dateutil.relativedelta import relativedelta
 
 from app.schemas.admin_schemas import ProfileCreate as AdminProfileCreate
 from app.schemas.admin_schemas import ProfileUpdate as AdminProfileUpdate
@@ -255,9 +256,31 @@ def test_profile_fields_accept_valid_length(profile_schema, field, value):
         ("citizenship", None),
         ("currency", None),
         ("activities", []),
+        ("birth_date", None)
     ],
 )
 def test_profile_fields_have_default_values(profile_schema, field, expected):
     schema, data = profile_schema
     profile = schema(**{**data, field: expected})
     assert getattr(profile, field) == expected
+
+
+def test_birth_date_rejects_under_18(profile_schema):
+    schema, data = profile_schema
+    birth_date = date.today() - relativedelta(years=18) + relativedelta(days=1)
+    with pytest.raises(ValidationError):
+        schema(**{**data, "birth_date": birth_date})
+
+
+def test_birth_date_accepts_adult(profile_schema):
+    schema, data = profile_schema
+    birth_date = date.today() - relativedelta(years=18)
+    profile = schema(**{**data, "birth_date": birth_date})
+    assert profile.birth_date == birth_date
+
+
+def test_birth_date_rejects_future_date(profile_schema):
+    schema, data = profile_schema
+    birth_date = date.today() + relativedelta(days=1)
+    with pytest.raises(ValidationError):
+        schema(**{**data, "birth_date": birth_date})
