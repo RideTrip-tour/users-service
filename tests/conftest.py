@@ -18,7 +18,7 @@ from app.dependencies.profiles import get_profile_manager
 from main import create_app
 
 INVALID_PROFILE_FIELDS = [
-    ("about_me", "A" * 301),
+    ("about_me", "A" * 201),
     ("activities", ["A"] * 26),
     ("country", "A"),
     ("country", "A" * 26),
