@@ -40,7 +40,7 @@ def make_profile(**overrides):
         "first_name": "Ann",
         "last_name": None,
         "phone_number": None,
-        "age": None,
+        "birth_date": None,
         "about_me": None,
         "activities": [],
         "country": None,

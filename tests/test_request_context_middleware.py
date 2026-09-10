@@ -16,7 +16,7 @@ class StubProfileManager:
             "first_name": "Ann",
             "last_name": "Smith",
             "phone_number": None,
-            "age": None,
+            "birth_date": None,
             "about_me": None,
             "activities": [],
             "country": None,
