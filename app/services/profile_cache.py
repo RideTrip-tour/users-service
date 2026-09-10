@@ -1,9 +1,13 @@
+import logging
+
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud.profiles_crud import get_profile_id_by_user_id
 from app.utils.converters import convert_value_to_int
 from config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class ProfileIDManager:
@@ -17,8 +21,19 @@ class ProfileIDManager:
         key = self._get_cache_key(user_id=user_id)
         cached_profile_id = await self.redis_client.get(key)
         if cached_profile_id is not None:
+            logger.debug(
+                "Profile ID cache hit: user_id=%s profile_id=%s",
+                user_id,
+                cached_profile_id,
+            )
             return convert_value_to_int(cached_profile_id)
+        logger.debug("Profile ID cache miss: user_id=%s", user_id)
         profile_id = await self._get_profile_id_from_db(user_id=user_id)
+        logger.debug(
+            "Profile ID loaded from database: user_id=%s profile_id=%s",
+            user_id,
+            profile_id,
+        )
         await self._set_cached_profile_id(profile_id=profile_id, key=key)
         return profile_id
 
@@ -32,6 +47,7 @@ class ProfileIDManager:
                 profile_id,
                 ex=settings.redis_ttl,
             )
+            logger.debug("Profile ID cached: profile_id=%s", profile_id)
 
     @staticmethod
     def _get_cache_key(user_id: int) -> str:
