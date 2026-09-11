@@ -6,6 +6,7 @@ from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from app.db.database import AsyncSessionLocal
+from app.services.devices_manager import DeviceManager
 from app.services.profile_cache import ProfileIDManager
 from app.utils.converters import convert_value_to_int
 
@@ -70,14 +71,26 @@ async def user_context_middleware(request: Request, call_next):
                 return _unauthorized_response()
 
             async with AsyncSessionLocal() as session:
+                redis_client = request.app.state.redis
                 profile_manager = ProfileIDManager(
-                    db=session,
-                    redis_client=request.app.state.redis,
+                    db=session, redis_client=redis_client
                 )
                 profile_id = await profile_manager.get_profile_id(user_id=user_id)
-            if profile_id is None:
-                logger.warning("Profile not found for user_id=%s", user_id)
-                return _unauthorized_response(detail="Profile not found")
+                if profile_id is None:
+                    logger.warning("Profile not found for user_id=%s", user_id)
+                    return _unauthorized_response(detail="Profile not found")
+                device_manager = DeviceManager(db=session, redis_client=redis_client)
+                # TODO: согласовать название заголовка с фронтом
+                device_id = request.headers.get("x-device-id")
+                if device_id is not None:
+                    await device_manager.register_device(
+                        profile_id=profile_id,
+                        device_id=device_id,
+                        # TODO: согласовать название заголовка с фронтом
+                        device_name=request.headers.get("x-device-name"),
+                        platform=request.headers.get("sec-ch-ua-platform"),
+                        user_agent=request.headers.get("user-agent"),
+                    )
             request.state.user["profile_id"] = profile_id
     response = await call_next(request)
     return response
