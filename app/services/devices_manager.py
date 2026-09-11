@@ -78,6 +78,7 @@ class DeviceManager:
     async def delete_device(self, profile_id: int, device_id: str) -> None:
         deleted = await crud_delete_device(self.db, profile_id, device_id)
         if deleted:
+            await self.redis_client.delete(self._get_cache_key(profile_id, device_id))
             logger.info(
                 "Device deleted: profile_id=%s device_id=%s",
                 profile_id,
