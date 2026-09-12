@@ -34,6 +34,13 @@ class DeviceManager:
         platform: str | None = None,
         user_agent: str | None = None,
     ) -> None:
+        """
+        Регистрирует устройство пользователя или обновляет last_seen_at.
+
+        Redis используется для ограничения частоты обращений к базе:
+        повторная регистрация одного устройства в течение TTL (300 c) не выполняет
+        операцию с базой данных.
+        """
         key = self._get_cache_key(profile_id, device_id)
         cached_device_flag = await self.redis_client.get(key)
         if cached_device_flag is None:

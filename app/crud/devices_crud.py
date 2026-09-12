@@ -32,11 +32,15 @@ async def _create_device(
     device: ProfileDevice,
 ) -> ProfileDevice:
     db.add(device)
+    await db.commit()
+    await db.refresh(device)
     return device
 
 
 async def _update_last_seen(db: AsyncSession, device: ProfileDevice) -> ProfileDevice:
     device.last_seen_at = datetime.now(UTC)
+    await db.commit()
+    await db.refresh(device)
     return device
 
 
@@ -44,6 +48,7 @@ async def _delete_device(db: AsyncSession, device: ProfileDevice | None) -> bool
     if device is None:
         return False
     await db.delete(device)
+    await db.commit()
     return True
 
 
